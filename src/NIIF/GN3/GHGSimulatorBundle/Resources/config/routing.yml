@@ -1,0 +1,3 @@
+niifgn3_ghg_simulator_homepage:
+    pattern:  /hello/{name}
+    defaults: { _controller: NIIFGN3GHGSimulatorBundle:Default:index }

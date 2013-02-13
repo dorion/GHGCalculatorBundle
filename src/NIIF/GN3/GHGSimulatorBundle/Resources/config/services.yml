@@ -1,0 +1,7 @@
+parameters:
+#    niifgn3_ghg_simulator.example.class: NIIF\GN3\GHGSimulatorBundle\Example
+
+services:
+#    niifgn3_ghg_simulator.example:
+#        class: %niifgn3_ghg_simulator.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]
