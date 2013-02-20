@@ -1,1 +1,28 @@
-Hello {{ name }}!
+{% extends '::base.html.twig' %}
+
+{% block stylesheets  %}
+  {% stylesheets '@NIIFGN3GHGSimulatorBundle/Resources/public/css/*' %}
+      <link rel="stylesheet" href="{{ asset_url }}" />
+  {% endstylesheets %}
+{% endblock %}
+
+{% block title %}GHG Simulator{% endblock %}
+
+{% block body %}
+<h1>GHG Simulator</h1>
+
+  <form action="" method="post" {{ form_enctype(form) }}>
+    {{ form_widget(form) }}
+    <div id="map_canvas" />
+    <input type="submit" />
+  </form>
+{% endblock %}
+
+{% block javascripts  %}
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
+
+  {% javascripts '@NIIFGN3GHGSimulatorBundle/Resources/public/js/*.js' %}
+      <script type="text/javascript" src="{{ asset_url }}"></script>
+  {% endjavascripts %}
+{% endblock %}
+
