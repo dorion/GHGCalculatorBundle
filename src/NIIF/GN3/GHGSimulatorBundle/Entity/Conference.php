@@ -4,93 +4,37 @@ namespace NIIF\GN3\GHGSimulatorBundle\Entity;
 
 class Conference
 {
-  protected $confernceName;
+  protected $confLocation;
 
-  protected $location;
+  protected $confDuration;
 
-  protected $duration;
+  protected $participantLocations;
 
-  protected $participants;
-
-  function setConferenceName($confrenceName) {
-    $this->conferenceName = $confrenceName;
+  function setConfLocation($location) {
+    $this->confLocation = $location;
   }
 
-  function getConferenceName() {
-    return $this->conferenceName;
+  function getConfLocation() {
+    return $this->confLocation;
   }
 
-  function setLocation(Location $location) {
-    $this->location = $location;
+  function setConfDuration($duration) {
+    $this->confDuration = $duration;
   }
 
-  function getLocation() {
-    return $this->location;
+  function getConfDuration() {
+    return $this->confDuration;
   }
 
-  function setDuration($duration) {
-    $this->duration = $duration;
+  function setParticipantLocations($participantLocation) {
+    $this->particpantLocations[] = $participantLocation;
   }
 
-  function getDuration() {
-    return $this->duration;
+  function getParticipantLocations() {
+    return $this->participantLocations;
   }
 
-  function setParticipants(Paticipants $participant) {
-    $this->particpants[] = $participant;
-  }
-
-  function getParticipants() {
-    return $this->participants;
-  }
-
-  function delParticipant($partipantId) {
-    unset($this->participants[$participantId]);
-  }
-}
-
-class Participant
-{
-  protected $name;
-
-  protected $location;
-
-  function setName($name) {
-    $this->name = $name;
-  }
-
-  function getName() {
-    return $this->name;
-  }
-
-  function setLocation(Location $location) {
-    $this->location = $location;
-  }
-
-  function getLocation() {
-    return $this->location;
-  }
-}
-
-class Location
-{
-  protected $latitude;
-
-  protected $longitude;
-
-  function setLatitude($latitude) {
-    $this->latitude = $latitude;
-  }
-
-  function getLatitude() {
-    return $this->latitude;
-  }
-
-  function setLongitude($longitude) {
-    $this->longitude = $longitude;
-  }
-
-  function getLongitude() {
-    return $this->longitude;
+  function delParticipantLocation($partipantLocationId) {
+    unset($this->participantLocations[$participantLocationId]);
   }
 }
