@@ -12,17 +12,65 @@
 <h1>GHG Simulator</h1>
 
   <form action="" method="post" {{ form_enctype(form) }}>
-    {{ form_widget(form) }}
-    <div id="map_canvas" />
+
+    {{ form_errors(form) }}
+
+    {{ form_row(form.confLocation) }}
+    {{ form_row(form.confDuration) }}
+
+    {{ form_label(form.participantLocations) }}
+
+    <div id="pl-fields-list" data-prototype="{{ form_widget(form.participantLocations.vars.prototype) | e }}">
+      {% for pl in form.participantLocations %}
+        <div>
+          {{ form_errors(pl) }}
+          {{ form_widget(pl) }}
+        </div>
+      {% endfor %}
+      </div>
+
+      <a href="#" id="add-another-pl">Add Participant Location</a>
+
+    {{ form_rest(form) }}
+
     <input type="submit" />
   </form>
+  <div id="map_canvas" />
 {% endblock %}
 
 {% block javascripts  %}
   <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
 
   {% javascripts '@NIIFGN3GHGSimulatorBundle/Resources/public/js/*.js' %}
       <script type="text/javascript" src="{{ asset_url }}"></script>
   {% endjavascripts %}
+
+  <script type="text/javascript">
+      // keep track of how many email fields have been rendered
+      var plCount = '{{ form.participantLocations | length }}';
+
+     // if (plCount <= 1) { plCount = 2; }
+
+      jQuery(document).ready(function() {
+          jQuery('#add-another-pl').click(function() {
+              var plList = jQuery('#pl-fields-list');
+
+              // grab the prototype template
+              var newWidget = plList.attr('data-prototype');
+              // replace the "__name__" used in the id and name of the prototype
+              // with a number that's unique to your emails
+              // end name attribute looks like name="contact[emails][2]"
+              newWidget = newWidget.replace(/__name__/g, plCount);
+              plCount++;
+
+              // create a new list element and add it to the list
+              var newLi = jQuery('<div></div>').html(newWidget);
+              newLi.appendTo(jQuery('#pl-fields-list'));
+
+              return false;
+          });
+      })
+  </script>
 {% endblock %}
 

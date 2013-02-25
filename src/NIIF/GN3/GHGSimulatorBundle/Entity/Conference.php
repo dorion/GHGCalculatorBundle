@@ -8,7 +8,7 @@ class Conference
 
   protected $confDuration;
 
-  protected $participantLocations;
+  protected $participantLocations = array();
 
   function setConfLocation($location) {
     $this->confLocation = $location;

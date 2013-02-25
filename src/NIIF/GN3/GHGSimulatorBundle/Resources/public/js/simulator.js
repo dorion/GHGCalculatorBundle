@@ -7,7 +7,7 @@ function initialize() {
   var map = new google.maps.Map(document.getElementById('map_canvas'),
     mapOptions);
 
-  var input = document.getElementById('form_confLocation');
+  var input = document.getElementById('conference_confLocation');
   var autocomplete = new google.maps.places.Autocomplete(input);
 
 
