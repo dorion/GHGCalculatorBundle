@@ -35,17 +35,14 @@
 
     <input type="submit" />
   </form>
-  <div id="map_canvas" />
 {% endblock %}
 
 {% block javascripts  %}
-  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
-  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-
   {% javascripts '@NIIFGN3GHGSimulatorBundle/Resources/public/js/*.js' %}
       <script type="text/javascript" src="{{ asset_url }}"></script>
   {% endjavascripts %}
 
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
   <script type="text/javascript">
       // keep track of how many email fields have been rendered
       var plCount = '{{ form.participantLocations | length }}';
@@ -67,9 +64,13 @@
               // create a new list element and add it to the list
               var newLi = jQuery('<div></div>').html(newWidget);
               newLi.appendTo(jQuery('#pl-fields-list'));
+          
+              $('#conference_participantLocations_' + (plCount -1) ).geocomplete();
 
               return false;
           });
+
+          $('#conference_confLocation').geocomplete();
       })
   </script>
 {% endblock %}
