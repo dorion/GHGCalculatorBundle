@@ -8,7 +8,7 @@ class Conference
 
   protected $confDuration;
 
-  protected $participantLocations = array();
+  protected $participantLocations;
 
   function setConfLocation($location) {
     $this->confLocation = $location;
@@ -26,8 +26,8 @@ class Conference
     return $this->confDuration;
   }
 
-  function setParticipantLocations($participantLocation) {
-    $this->particpantLocations[] = $participantLocation;
+  function setParticipantLocations($participantLocations) {
+    $this->particpantLocations = $participantLocations;
   }
 
   function getParticipantLocations() {
