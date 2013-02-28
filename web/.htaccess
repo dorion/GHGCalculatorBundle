@@ -1,9 +1,11 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    #<IfModule mod_vhost_alias.c>
-    #    RewriteBase /
-    #</IfModule>
+    <IfModule mod_vhost_alias.c>
+        RewriteBase /
+    </IfModule>
+    RewriteCond %{REQUEST_URI} ^/$
+    RewriteRule ^(.*)$ http://%{SERVER_NAME}/ghgsimulator [L,R=301]
 
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^(.*)$ app.php [QSA,L]
