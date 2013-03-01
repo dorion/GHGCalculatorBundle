@@ -1,14 +1,32 @@
 {% extends '::base.html.twig' %}
 
-{% macro sum(data, part) %}
-  {% set sum = 0 %}
-  {% for key, value in data %}
-    {% if key != 'conf' %}
-      {#% set sum = sum + value.part %#}
-    {% endif %}
-  {% endfor %}
-  {{ sum }}
+{% macro humanDuration(seconds) %}
+  {% set time = 0 %}
+  {% set minutes = seconds // 60 %}
+  {% set hours = minutes // 60 %}
+  {% set days = hours // 24 %}
+  {% set years = days // 365 %}
+  {% set display_sec = seconds - (minutes * 60) %}
+  {% set display_min = minutes - (hours * 60) %}
+  {% set display_hour = hours - (days * 24) %}
+  {% set display_year = years - (years * 365) %}
+  {% transchoice display_year %}
+    {0}|{1} %display_year% year|]1,Inf] %display_year% years
+  {% endtranschoice %}
+
+  {% transchoice display_hour %}
+    {0}|{1} %display_hour% hour|]1,Inf] %display_hour% hours
+  {% endtranschoice %}
+
+  {% transchoice display_min %}
+    {0}|{1} %display_min% minute|]1,Inf] %display_min% minutes
+  {% endtranschoice %}
+
+  {% transchoice display_sec %}
+    {0}|{} %display_sec% second|]1,Inf] %display_sec% seconds
+  {% endtranschoice %}
 {% endmacro %}
+{% import _self as time %}
 
 {% block stylesheets  %}
   {% stylesheets '@NIIFGN3GHGSimulatorBundle/Resources/public/css/*' %}
@@ -38,9 +56,9 @@
     {% if key != 'conf' %}
       <tr>
         <td>{{ loop.index0 }}</td>
-        <td>{{ (participant.vehicle_co2 / 1000)|number_format(2, '.', ',') }} kg</td>
+        <td>{{ (participant.vehicleCO2 / 1000)|number_format(2, '.', ',') }} kg</td>
         <td>{{ (participant.save / 1000)|number_format(2, '.', ',') }} kg</td>
-        <td>{{ participant.duration }}</td>
+        <td>{{ time.humanDuration(participant.duration) }}</td>
         <td>{{ key }}</td>
         <!--td>{{ participant.coord.lat }}</td>
         <td>{{ participant.coord.lng }}</td-->
@@ -57,11 +75,14 @@
     </tr>
     <tr>
       <td>
-      {% import _self as summary %}
-      {{ summary.sum(data, 'vehicle_co2') }}
+        {{ (data.conf.summary.vehicleCO2 / 1000)|number_format(2, '.', ',') }} kg
       </td>
-      <td></td>
-      <td></td>
+      <td>
+        {{ (data.conf.summary.save / 1000)|number_format(2, '.', ',') }} kg
+      </td>
+      <td>
+        {{ time.humanDuration(data.conf.summary.duration) }} 
+      </td>
     </tr>
   </table>
   <div id="map"></div>

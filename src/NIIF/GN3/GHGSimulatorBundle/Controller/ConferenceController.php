@@ -16,7 +16,7 @@ class ConferenceController extends Controller
     function __construct() {
       //Google map api key
       define('GOOGLE_MAP_API_KEY', 'AIzaSyBjBQ3ho3wTYIDgxSa8g_3ryCpNfrSAn0U');
-      //
+
       ////CO2 emission constants
       define('CO2_EMISSION_CAR', 176); // g/km
       define('CO2_EMISSION_TRAIN', 60); // g/km
@@ -26,12 +26,12 @@ class ConferenceController extends Controller
       define('CO2_EMISSION_GATEKEEPER', 0.0176); // g/s
       define('CO2_EMISSION_VIDCONF_ENDPOINT', 0.0073); // g/s
       define('CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY', 0.0117); // g/s
-      //
+
       ////Vehicel distance limit in km
       define('CO2_DISTANCE_CAR', 300);
       define('CO2_DISTANCE_TRAIN', 500);
       define('CO2_DISTANCE_AEROPLANE', 800);
-      //
+
       ////Average speed for the time etimate
       define('CO2_AVERAGE_SPEED_AEROPLANE', 236); //m/s
     }
@@ -89,7 +89,6 @@ class ConferenceController extends Controller
     }
 
     private function calculateGHGSaving($participantLocations, $confLocation, $duration) {
-      
       $tableData['conf']['coord'] = $this->resolveCooridinates($confLocation);
       foreach ($participantLocations AS $participant) {
         //resolv coordinate by partipant
@@ -99,7 +98,7 @@ class ConferenceController extends Controller
       foreach ($tableData AS $index => $row){
         if ($index !== 'conf') {
           $res = $this->resolveDistanceAndTime($tableData['conf']['coord'], $row['coord']);
-          $tableData[$index]['duration'] = $this->humanTimeFormat($res['duration']);
+          $tableData[$index]['duration'] = $res['duration'];
           $tableData[$index]['distance'] = $res['distance'];
         }
       }
@@ -110,12 +109,25 @@ class ConferenceController extends Controller
         if ($index !== 'conf') {
           $res = $this->emissionComputing($row['distance'], $duration, $numberOfParticipants);
           $tableData[$index]['save'] = $res['save'];
-          $tableData[$index]['vehicle_co2'] = $res['vehicle_co2'];
+          $tableData[$index]['vehicleCO2'] = $res['vehicleCO2'];
           $tableData[$index]['vidconf_co2'] = $res['vidconf_co2'];
         }
       }
+      
+      $tableData['conf']['summary'] = array(
+        'save' => 0,
+        'vehicleCO2' => 0,
+        'duration' => 0
+      );
 
-      #var_dump($tableData);
+      foreach ($tableData AS $index => $row) {
+        if ($index !== 'conf') {
+          $tableData['conf']['summary']['save'] += $row['save'];
+          $tableData['conf']['summary']['vehicleCO2'] += $row['vehicleCO2'];
+          $tableData['conf']['summary']['duration'] += $row['duration'];
+        }
+      }
+
       return $tableData;
     }
 
@@ -219,19 +231,19 @@ class ConferenceController extends Controller
      *
      * @return
      *   An array which is containing the GHG emission save(key: save),
-     *   the vehicle GHG emission(key: vehicle_co2)
+     *   the vehicle GHG emission(key: vehicleCO2)
      *   and the vidconf equipments GHG emission(key: vidconf_co2).
      */
     private function emissionComputing($distance, $duration, $part_num) {
       $save = 0;
 
-      $vehicle_co2      = $this->vehicle_co2($distance);
-      $vidconf_env_co2  = $this->vidconf_env_co2($part_num);
-      $vehicle_emission = ( $distance / 1000 ) * $vehicle_co2 * 2; //round-trip vehicle CO2 emission in gramm
-      $vidconf_emission = $duration * $vidconf_env_co2; //CO2 emission in gramm
+      $vehicleCO2      = $this->vehicleCO2($distance);
+      $vidconfEnvCO2  = $this->vidconfEnvCO2($part_num);
+      $vehicle_emission = ( $distance / 1000 ) * $vehicleCO2 * 2; //round-trip vehicle CO2 emission in gramm
+      $vidconf_emission = $duration * $vidconfEnvCO2; //CO2 emission in gramm
       $save             = $vehicle_emission - $vidconf_emission;
 
-      return array('save' => $save, 'vehicle_co2' => $vehicle_emission, 'vidconf_co2' => $vidconf_emission);
+      return array('save' => $save, 'vehicleCO2' => $vehicle_emission, 'vidconf_co2' => $vidconf_emission);
     }
 
     /**
@@ -243,7 +255,7 @@ class ConferenceController extends Controller
      * @return
      *   Vehicle GHG emission value in g/km.
      */
-    private function vehicle_co2($distance) {
+    private function vehicleCO2($distance) {
       $distance = $distance / 1000;
       if ($distance > 0 AND $distance <= CO2_DISTANCE_CAR) {
         return CO2_EMISSION_CAR;
@@ -268,43 +280,12 @@ class ConferenceController extends Controller
      * @return
      *   Amount of the MCU and the endpoints GHG emission in g/hour.
      */
-    private function vidconf_env_co2($part_num = 2) {
+    private function vidconfEnvCO2($part_num = 2) {
       if ($part_num > 2) {
         return ((CO2_EMISSION_MCU + CO2_EMISSION_GATEKEEPER) / $part_num) + CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY + CO2_EMISSION_VIDCONF_ENDPOINT;
       }
       elseif($part_num === 2) {
         return (CO2_EMISSION_GATEKEEPER / $part_num) + CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY + CO2_EMISSION_VIDCONF_ENDPOINT;
       }
-    }
-
-    /**
-     * Convert seconds to days hours minutes second fromat
-     *
-     * @param $seconds
-     *   Seconds to convert.
-     *
-     * @return
-     *   Return whit string which is containing the input seconds converted to "# day # hour # minute # second" format.
-     */
-    private function humanTimeFormat($seconds) {
-      $time = '';
-
-      $minutes  = floor( $seconds / 60);
-      $hours    = floor( $minutes / 60 );
-      $days     = floor( $hours / 24 );
-      $years    = floor( $days / 365 );
-
-      $display_seconds  = $seconds - ( $minutes * 60 );
-      $display_minutes  = $minutes - ( $hours * 60 );
-      $display_hours    = $hours - ( $days * 24 );
-      $display_days     = $days - ( $years * 365 );
-
-      $time .= $years           ? $this->get('translator')->transChoice('1 year|%count% years', 2, array('%count%' => $years)) .' ' : NULL;
-      $time .= $display_days    ? $this->get('translator')->transChoice('1 day|%count% days', 2, array('%count%' => $display_days)) .' ' : NULL;
-      $time .= $display_hours   ? $this->get('translator')->transChoice('1 hour|%count% hours', 2, array('%count%' => $display_hours)) .' ' : NULL;
-      $time .= $display_minutes ? $this->get('translator')->transChoice('1 minute|%count% minutes', 2, array('%count%' => $display_minutes)) .' ' : NULL;
-      $time .= $display_seconds ? $this->get('translator')->transChoice('1 second|%count% seconds', 2, array('%count%' => $display_seconds)) : NULL;
-
-      return $time;
     }
 }
