@@ -1,26 +1,37 @@
 {% extends '::base.html.twig' %}
 
+{% macro sum(data, part) %}
+  {% set sum = 0 %}
+  {% for key, value in data %}
+    {% if key != 'conf' %}
+      {#% set sum = sum + value.part %#}
+    {% endif %}
+  {% endfor %}
+  {{ sum }}
+{% endmacro %}
+
 {% block stylesheets  %}
   {% stylesheets '@NIIFGN3GHGSimulatorBundle/Resources/public/css/*' %}
       <link rel="stylesheet" href="{{ asset_url }}" />
   {% endstylesheets %}
 {% endblock %}
 
-{% block title %}GHG Savings Simulator- Savings{% endblock %}
+{% block title %}GHGi Emission Savings Simulator- Savings{% endblock %}
+
+{% block header %}
+  <h1>GHG emission savings</h1>
+{% endblock %}
 
 {% block body %}
-<h1>GHG Simulator savings</h1>
-
-  <table>
+  <table border="1">
     <tr>
       <th>#</th>
       <th>Suspected GHG emission</th>
-      <th>Suspected GHG videoconference emission</th>
       <th>GHG emission saving</th>
       <th>Working hours savings</th>
       <th>Location</th>
-      <th>Latitude</th>
-      <th>Longitude</th>
+      <!--th>Latitude</th>
+      <th>Longitude</th-->
     </tr>
   {% for key, participant in data %}
     
@@ -28,17 +39,31 @@
       <tr>
         <td>{{ loop.index0 }}</td>
         <td>{{ (participant.vehicle_co2 / 1000)|number_format(2, '.', ',') }} kg</td>
-        <td>{{ (participant.vidconf_co2 / 1000) }} kg</td>
         <td>{{ (participant.save / 1000)|number_format(2, '.', ',') }} kg</td>
         <td>{{ participant.duration }}</td>
         <td>{{ key }}</td>
-        <td>{{ participant.coord.lat }}</td>
-        <td>{{ participant.coord.lng }}</td>
+        <!--td>{{ participant.coord.lat }}</td>
+        <td>{{ participant.coord.lng }}</td-->
       </tr>
     {% endif %}
   {% endfor %}
   </table>
 
+  <table border="1">
+    <tr>
+      <th>Suspected GHG emission</th>
+      <th>GHG emission saving</th>
+      <th>Working hours savings</th>
+    </tr>
+    <tr>
+      <td>
+      {% import _self as summary %}
+      {{ summary.sum(data, 'vehicle_co2') }}
+      </td>
+      <td></td>
+      <td></td>
+    </tr>
+  </table>
   <div id="map"></div>
 {% endblock %}
 
