@@ -7,7 +7,24 @@
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
     </head>
     <body>
-        {% block body %}{% endblock %}
-        {% block javascripts %}{% endblock %}
+      <div id="main">
+
+        <div id="header" class="rounded-corners">
+          {% block header %}{% endblock %}
+        </div>
+
+        <div id="content" class="rounded-corners">
+          {% block body %}{% endblock %}
+        </div>
+
+        <div id="footer" class="rounded-corners">
+          {% block footer %}
+            © 2013 <a href="http://niif.hu" alt="Official site of the NIIF Institute">NIIF Institute</a><br />
+            Powered and devenloped by NIIF Institute
+          {% endblock %}
+        </div>
+
+      </div>
+      {% block javascripts %}{% endblock %}
     </body>
 </html>
