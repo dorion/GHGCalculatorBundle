@@ -6,12 +6,16 @@
   {% set hours = minutes // 60 %}
   {% set days = hours // 24 %}
   {% set years = days // 365 %}
-  {% set display_sec = seconds - (minutes * 60) %}
-  {% set display_min = minutes - (hours * 60) %}
+  {% set display_sec  = seconds - (minutes * 60) %}
+  {% set display_min  = minutes - (hours * 60) %}
   {% set display_hour = hours - (days * 24) %}
-  {% set display_year = years - (years * 365) %}
-  {% transchoice display_year %}
-    {0}|{1} %display_year% year|]1,Inf] %display_year% years
+  {% set display_day  = days - (years * 365) %}
+  {% transchoice years %}
+    {0}|{1} %years% year|]1,Inf] %years% years
+  {% endtranschoice %}
+
+  {% transchoice display_day %}
+    {0}|{1} %display_day% day|]1,Inf] %display_day% days
   {% endtranschoice %}
 
   {% transchoice display_hour %}

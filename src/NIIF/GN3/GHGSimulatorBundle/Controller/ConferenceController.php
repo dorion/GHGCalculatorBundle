@@ -128,6 +128,7 @@ class ConferenceController extends Controller
         }
       }
 
+      var_dump($tableData);
       return $tableData;
     }
 
