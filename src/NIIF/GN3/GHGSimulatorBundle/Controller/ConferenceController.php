@@ -1,5 +1,4 @@
 <?php
-
 namespace NIIF\GN3\GHGSimulatorBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -10,52 +9,44 @@ use NIIF\GN3\GHGSimulatorBundle\Entity\Conference;
 
 use NIIF\GN3\GHGSimulatorBundle\Form\Type\ConferenceType;
 
-
 class ConferenceController extends Controller
 {
+    //CO2 emission constants
+    const CO2_EMISSION_CAR = 176; // g/km
+    const CO2_EMISSION_TRAIN = 60; // g/km
+    const CO2_EMISSION_AEROPLANE_800 = 160; // g/km
+    const CO2_EMISSION_AEROPLANE_800_PLUS = 100; // g/km
+    const CO2_EMISSION_MCU = 0.0856; // g/s
+    const CO2_EMISSION_GATEKEEPER = 0.0176; // g/s
+    const CO2_EMISSION_VIDCONF_ENDPOINT = 0.0073; // g/s
+    const CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY = 0.0117; // g/s
+
+    //Vehicel distance limit in km
+    const CO2_DISTANCE_CAR = 300; //km
+    const CO2_DISTANCE_TRAIN = 500; //km
+    const CO2_DISTANCE_AEROPLANE = 800; //km
+
+    //Average speed for the time etimate
+    const CO2_AVERAGE_SPEED_AEROPLANE = 236; //m/s
+
+    //Google map api key
+    const GOOGLE_MAP_API_KEY = 'AIzaSyBjBQ3ho3wTYIDgxSa8g_3ryCpNfrSAn0U';
+
+    private $conference;
+
     function __construct() {
-      //Google map api key
-      define('GOOGLE_MAP_API_KEY', 'AIzaSyBjBQ3ho3wTYIDgxSa8g_3ryCpNfrSAn0U');
-
-      ////CO2 emission constants
-      define('CO2_EMISSION_CAR', 176); // g/km
-      define('CO2_EMISSION_TRAIN', 60); // g/km
-      define('CO2_EMISSION_AEROPLANE_800', 160); // g/km
-      define('CO2_EMISSION_AEROPLANE_800_PLUS', 100); // g/km
-      define('CO2_EMISSION_MCU', 0.0856); // g/s
-      define('CO2_EMISSION_GATEKEEPER', 0.0176); // g/s
-      define('CO2_EMISSION_VIDCONF_ENDPOINT', 0.0073); // g/s
-      define('CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY', 0.0117); // g/s
-
-      ////Vehicel distance limit in km
-      define('CO2_DISTANCE_CAR', 300);
-      define('CO2_DISTANCE_TRAIN', 500);
-      define('CO2_DISTANCE_AEROPLANE', 800);
-
-      ////Average speed for the time etimate
-      define('CO2_AVERAGE_SPEED_AEROPLANE', 236); //m/s
-    }
+        $this->conference = new Conference();
+    }  
 
     public function indexAction(Request $request)
     {
-        $conference = new Conference();
-        
-        $form = $this->createForm(new ConferenceType(), $conference);
+        $form = $this->createForm(new ConferenceType(), $this->conference);
 
         if ($request->getMethod() == 'POST') {
             $form->bindRequest($request);
 
             if ($form->isValid()) {
-
-              $duration = $conference->getConfDuration()->format('H:i');
-              $durTemp = explode(':', $duration);
-              $duration = ($durTemp[0] * 60) + $durTemp[1];
-
-              $confData = $this->calculateGHGSaving(
-                $conference->particpantLocations,
-                $conference->getConfLocation(),
-                $duration
-              ); 
+              $confData = $this->calculateGHGSaving(); 
 
               $origins = NULL;
               $destinations = NULL;
@@ -77,7 +68,7 @@ class ConferenceController extends Controller
                   'data'        => $confData,
                   'origins'     => $origins,
                   'destinations'=> $destinations,
-                  'gmapskey'    => GOOGLE_MAP_API_KEY
+                  'gmapskey'    => self::GOOGLE_MAP_API_KEY
                 )
               );
             }
@@ -88,11 +79,12 @@ class ConferenceController extends Controller
         ));
     }
 
-    private function calculateGHGSaving($participantLocations, $confLocation, $duration) {
-      $tableData['conf']['coord'] = $this->resolveCooridinates($confLocation);
-      foreach ($participantLocations AS $participant) {
-        //resolv coordinate by partipant
-        $tableData[$participant]['coord'] = $this->resolveCooridinates($participant);
+    private function calculateGHGSaving() {
+      $tableData['conf']['coord'] = $this->resolveCooridinates($this->conference->getConfLocation());
+      foreach ($this->conference->getParticipants() AS $participant) {
+        //resolve coordinate by partipant
+        $tableData[$participant->getParticipantLocation()]['coord'] = $this->resolveCooridinates($participant->getParticipantLocation());
+        $tableData[$participant->getParticipantLocation()]['travelBy'] = $participant->getTravelingBy();
       }
       
       foreach ($tableData AS $index => $row){
@@ -107,10 +99,15 @@ class ConferenceController extends Controller
 
       foreach ($tableData AS $index => $row) {
         if ($index !== 'conf') {
-          $res = $this->emissionComputing($row['distance'], $duration, $numberOfParticipants);
+          $res = $this->emissionComputing(
+            $row['distance'],
+            $this->conference->getConfDurationInSeconds(),
+            $row['travelBy'],
+            $numberOfParticipants
+          );
           $tableData[$index]['save'] = $res['save'];
           $tableData[$index]['vehicleCO2'] = $res['vehicleCO2'];
-          $tableData[$index]['vidconf_co2'] = $res['vidconf_co2'];
+          $tableData[$index]['vidconfCO2'] = $res['vidconfCO2'];
         }
       }
       
@@ -186,7 +183,7 @@ class ConferenceController extends Controller
         }
         elseif($result['rows'][0]['elements'][0]['status'] === 'ZERO_RESULTS') {
           $dist = $this->coordDistance($start_point, $end_point);
-          $time = round($dist / CO2_AVERAGE_SPEED_AEROPLANE);
+          $time = round($dist / self::CO2_AVERAGE_SPEED_AEROPLANE);
 
           if (is_float($dist) AND !empty($time)) {
             return array('distance' => $dist, 'duration' => $time);
@@ -232,18 +229,18 @@ class ConferenceController extends Controller
      * @return
      *   An array which is containing the GHG emission save(key: save),
      *   the vehicle GHG emission(key: vehicleCO2)
-     *   and the vidconf equipments GHG emission(key: vidconf_co2).
+     *   and the vidconf equipments GHG emission(key: vidconfCO2).
      */
-    private function emissionComputing($distance, $duration, $part_num) {
+    private function emissionComputing($distance, $duration, $travelBy, $numberOfParticipants) {
       $save = 0;
 
-      $vehicleCO2      = $this->vehicleCO2($distance);
-      $vidconfEnvCO2  = $this->vidconfEnvCO2($part_num);
-      $vehicle_emission = ( $distance / 1000 ) * $vehicleCO2 * 2; //round-trip vehicle CO2 emission in gramm
-      $vidconf_emission = $duration * $vidconfEnvCO2; //CO2 emission in gramm
-      $save             = $vehicle_emission - $vidconf_emission;
+      $vehicleCO2       = $this->vehicleCO2($distance, $travelBy);
+      $vidconfEnvCO2    = $this->vidconfEnvCO2($numberOfParticipants);
+      $vehicleEmission = ( $distance / 1000 ) * $vehicleCO2 * 2; //round-trip vehicle CO2 emission in gramm
+      $vidconfEmission = $duration * $vidconfEnvCO2; //CO2 emission in gramm
+      $save             = $vehicleEmission - $vidconfEmission;
 
-      return array('save' => $save, 'vehicleCO2' => $vehicle_emission, 'vidconf_co2' => $vidconf_emission);
+      return array('save' => $save, 'vehicleCO2' => $vehicleEmission, 'vidconfCO2' => $vidconfEmission);
     }
 
     /**
@@ -255,22 +252,34 @@ class ConferenceController extends Controller
      * @return
      *   Vehicle GHG emission value in g/km.
      */
-    private function vehicleCO2($distance) {
-      $distance = $distance / 1000;
-      if ($distance > 0 AND $distance <= CO2_DISTANCE_CAR) {
-        return CO2_EMISSION_CAR;
-      }
-      elseif ($distance > CO2_DISTANCE_CAR AND $distance <= CO2_DISTANCE_TRAIN) {
-        return CO2_EMISSION_TRAIN;
-      }
-      elseif ($distance > CO2_DISTANCE_TRAIN AND $distance <= CO2_DISTANCE_AEROPLANE) {
-        return CO2_EMISSION_AEROPLANE_800;
-      }
-      elseif ($distance > CO2_DISTANCE_AEROPLANE) {
-        return CO2_EMISSION_AEROPLANE_800_PLUS;
+    private function vehicleCO2($distance, $travelBy = NULL) {
+      $distance = $distance / 1000; //Convert meters to km
+
+      if($travelBy != NULL) {
+        if ($distance > 0 AND $distance <= self::CO2_DISTANCE_CAR) {
+          return self::CO2_EMISSION_CAR;
+        }
+        elseif ($distance > self::CO2_DISTANCE_CAR AND $distance <= self::CO2_DISTANCE_TRAIN) {
+          return self::CO2_EMISSION_TRAIN;
+        }
+        elseif ($distance > self::CO2_DISTANCE_TRAIN AND $distance <= self::CO2_DISTANCE_AEROPLANE) {
+          return self::CO2_EMISSION_AEROPLANE_800;
+        }
+        elseif ($distance > self::CO2_DISTANCE_AEROPLANE) {
+          return self::CO2_EMISSION_AEROPLANE_800_PLUS;
+        }
+        else {
+          return 0;
+        }
       }
       else {
-        return 0;
+        switch ($travelBy) {
+          case 'car':       return self::CO2_EMISSION_CAR;
+          case 'train':     return self::CO2_EMISSION_TRAIN;
+          case 'plane':     return self::CO2_DISTANCE_AEROPLANE;
+          case 'plane800':  return self::CO2_DISTANCE_AEROPLANE_800_PLUS;
+          default:          return 0;
+        } 
       }
     }
 
@@ -280,12 +289,12 @@ class ConferenceController extends Controller
      * @return
      *   Amount of the MCU and the endpoints GHG emission in g/hour.
      */
-    private function vidconfEnvCO2($part_num = 2) {
-      if ($part_num > 2) {
-        return ((CO2_EMISSION_MCU + CO2_EMISSION_GATEKEEPER) / $part_num) + CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY + CO2_EMISSION_VIDCONF_ENDPOINT;
+    private function vidconfEnvCO2($numberOfParticipants = 2) {
+      if ($numberOfParticipants > 2) {
+        return ((self::CO2_EMISSION_MCU + self::CO2_EMISSION_GATEKEEPER) / $numberOfParticipants) + self::CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY + self::CO2_EMISSION_VIDCONF_ENDPOINT;
       }
-      elseif($part_num === 2) {
-        return (CO2_EMISSION_GATEKEEPER / $part_num) + CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY + CO2_EMISSION_VIDCONF_ENDPOINT;
+      elseif($numberOfParticipants === 2) {
+        return (self::CO2_EMISSION_GATEKEEPER / $numberOfParticipants) + self::CO2_EMISSION_VIDCONF_ENDPOINT_DISPLAY + self::CO2_EMISSION_VIDCONF_ENDPOINT;
       }
     }
 }
