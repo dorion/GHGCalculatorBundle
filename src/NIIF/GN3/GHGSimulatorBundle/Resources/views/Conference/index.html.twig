@@ -40,7 +40,7 @@
     var collectionHolder = $('#pl-fields-list');
 
     // setup an "add a participant" link
-    var $addParticipantLink = $('<a href="#" class="button">+</a>');
+    var $addParticipantLink = $('<a href="#" class="button" id="add_participant">+</a>');
     var $newLinkDiv = $('<div></div>').append($addParticipantLink);
 
     jQuery(document).ready(function() {
@@ -64,11 +64,15 @@
             addParticipantForm(collectionHolder, $newLinkDiv);
         });
 
-        $('#conference_confLocation').geocomplete();
+        for (i = 1; i < 3; i++) {
+          $("#add_participant").trigger('click');
+        }
+
+        $("#conference_confLocation").geocomplete();
 
         createButtonFormA();
 
-        $this.tooltip({
+        this.tooltip({
           track: true
         });
     });
@@ -96,7 +100,7 @@
         addParticipantFormDeleteLink($newFormDiv);
         
         //binding geocoding function
-        ('#conference_participants_' + index + '_participantLocation').geocomplete();
+        $('#conference_participants_' + index + '_participantLocation').geocomplete();
     }
   
     function createButtonFormA() {
