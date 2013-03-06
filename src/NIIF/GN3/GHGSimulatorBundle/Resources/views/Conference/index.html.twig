@@ -25,7 +25,7 @@
    
     {{ form_rest(form) }}
 
-    <input type="submit" class="button" />
+    <input type="submit" />
   </form>
 {% endblock %}
 
@@ -106,6 +106,9 @@
     function createButtonFormA() {
       $(".button").button().click(function( event ) {
         event.preventDefault();
+      });
+
+      $("input[type=submit]").button().click(function( event ) {
       });
     }
 
