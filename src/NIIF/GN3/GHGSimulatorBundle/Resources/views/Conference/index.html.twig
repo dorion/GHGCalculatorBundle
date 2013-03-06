@@ -21,18 +21,13 @@
     {{ form_row(form.confLocation) }}
     {{ form_row(form.confDuration) }}
 
-    {{ form_label(form.participantLocations) }}
-
-    <div id="pl-fields-list" data-prototype="{{ form_widget(form.participantLocations.vars.prototype) | e }}">
-      {% for pl in form.participantLocations %}
-        <div>
-          {{ form_errors(pl) }}
-          {{ form_widget(pl) }}
+    <div id="pl-fields-list" data-prototype="{{ form_widget(form.participants.vars.prototype) | e }}">
+      {% for pl in form.participants %}
+        <div class="participant">
+          {{ form_row(pl) }}
         </div>
       {% endfor %}
       </div>
-
-      <a href="#" id="add-another-pl">Add Participant Location</a>
 
     {{ form_rest(form) }}
 
@@ -47,34 +42,74 @@
 
   <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
   <script type="text/javascript">
-      // keep track of how many email fields have been rendered
-      var plCount = '{{ form.participantLocations | length }}';
+    // Get the ul that holds the collection of participants
+    var collectionHolder = $('#pl-fields-list');
 
-     // if (plCount <= 1) { plCount = 2; }
+    // setup an "add a participant" link
+    var $addParticipantLink = $('<a href="#" class="add_participant_link">Add a participant</a>');
+    var $newLinkDiv = $('<div></div>').append($addParticipantLink);
 
-      jQuery(document).ready(function() {
-          jQuery('#add-another-pl').click(function() {
-              var plList = jQuery('#pl-fields-list');
+    jQuery(document).ready(function() {
+        // add a delete link to all of the existing participant form div elements
+        collectionHolder.find('div').each(function() {
+            addParticipantFormDeleteLink($(this));
+        });
 
-              // grab the prototype template
-              var newWidget = plList.attr('data-prototype');
-              // replace the "__name__" used in the id and name of the prototype
-              // with a number that's unique to your emails
-              // end name attribute looks like name="contact[emails][2]"
-              newWidget = newWidget.replace(/__name__/g, plCount);
-              plCount++;
+        // add the "add a participant" anchor and li to the participants ul
+        collectionHolder.append($newLinkDiv);
 
-              // create a new list element and add it to the list
-              var newLi = jQuery('<div></div>').html(newWidget);
-              newLi.appendTo(jQuery('#pl-fields-list'));
-          
-              $('#conference_participantLocations_' + (plCount -1) ).geocomplete();
+        // count the current form inputs we have (e.g. 2), use that as the new
+        // index when inserting a new item (e.g. 2)
+        collectionHolder.data('index', collectionHolder.find(':input').length);
 
-              return false;
-          });
+        $addParticipantLink.on('click', function(e) {
+            // prevent the link from creating a "#" on the URL
+            e.preventDefault();
 
-          $('#conference_confLocation').geocomplete();
-      })
+            // add a new participant form (see next code block)
+            addParticipantForm(collectionHolder, $newLinkDiv);
+        });
+
+        $('#conference_confLocation').geocomplete();
+    });
+
+    function addParticipantForm(collectionHolder, $newLinkDiv) {
+        // Get the data-prototype explained earlier
+        var prototype = collectionHolder.data('prototype');
+
+        // get the new index
+        var index = collectionHolder.data('index');
+
+        // Replace '__name__' in the prototype's HTML to
+        // instead be a number based on how many items we have
+        var newForm = prototype.replace(/__name__/g, index);
+
+        // increase the index with one for the next item
+        collectionHolder.data('index', index + 1);
+
+        // Display the form in the page in an div, before the "Add a participant" link div
+        var $newFormDiv = $('<div></div>').append(newForm);
+        $newLinkDiv.before($newFormDiv);
+            
+        // add a delete link to the new form
+        addParticipantFormDeleteLink($newFormDiv);
+        
+        //binding geocoding function
+        ('#conference_participants_' + index + '_participantLocation').geocomplete();
+    }
+
+    function addParticipantFormDeleteLink($participantFormDiv) {
+        var $removeFormA = $('<a href="#">Delete this participant</a>');
+        $participantFormDiv.append($removeFormA);
+
+        $removeFormA.on('click', function(e) {
+            // prevent the link from creating a "#" on the URL
+            e.preventDefault();
+
+            // remove the div for the participant form
+            $participantFormDiv.remove();
+        });
+    }
   </script>
 {% endblock %}
 
