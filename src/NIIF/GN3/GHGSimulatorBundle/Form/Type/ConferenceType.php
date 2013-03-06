@@ -25,17 +25,18 @@ class ConferenceType extends AbstractType
           )
         );
         $builder->add(
-          'participantLocations',
+          'participants',
           'collection',
           array(
-            'type'          => 'text',
+            'type'          => new ParticipantType(),
             'allow_add'     => true,
             'allow_delete'  => true,
             'prototype'     => true,
-            'label'         => 'Participant Location: ',
+            'by_reference'  => false,
             'options'       => array(
               'required'  => TRUE,
               'attr'      => array(
+                'label'     => ' ',
                 'class' => 'participant-location',
                 'size' => 80
               )

@@ -1,6 +1,7 @@
 <?php
-
 namespace NIIF\GN3\GHGSimulatorBundle\Entity;
+
+use Doctrine\Common\Collections\ArrayCollection;
 
 class Conference
 {
@@ -8,7 +9,12 @@ class Conference
 
   protected $confDuration;
 
-  protected $participantLocations;
+  protected $participants;
+
+  public function __construct()
+  {
+    $this->participants = new ArrayCollection();
+  }
 
   function setConfLocation($location) {
     $this->confLocation = $location;
@@ -26,15 +32,18 @@ class Conference
     return $this->confDuration;
   }
 
-  function setParticipantLocations($participantLocations) {
-    $this->particpantLocations = $participantLocations;
+  function getConfDurationInSeconds() {
+    $duration = $this->confDuration->format('H:i');
+    $durTemp = explode(':', $duration);
+    return ($durTemp[0] * 60) + $durTemp[1];
   }
 
-  function getParticipantLocations() {
-    return $this->participantLocations;
+  function setParticipants(ArrayCollections $participants) {
+    $this->participants = $participants;
   }
 
-  function delParticipantLocation($partipantLocationId) {
-    unset($this->participantLocations[$participantLocationId]);
+  function getParticipants() {
+    return $this->participants;
   }
+
 }
