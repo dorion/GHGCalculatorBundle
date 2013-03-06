@@ -15,7 +15,7 @@ class ParticipantType extends AbstractType
           array(
             'label' => 'Participant Location: ',
             'attr'  => array(
-              'size'  => 80,
+              'size'  => 60,
               'class' => 'participant-location',
             )
           )

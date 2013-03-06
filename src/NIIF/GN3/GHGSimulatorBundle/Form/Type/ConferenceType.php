@@ -14,7 +14,10 @@ class ConferenceType extends AbstractType
           'text',
           array(
             'label' => 'Location: ',
-            'attr' => array('size' => 80),
+            'attr' => array(
+              'size' => 80,
+              'title'=> 'Location of the conference',
+            ),
           )
         );
         $builder->add(
@@ -33,14 +36,7 @@ class ConferenceType extends AbstractType
             'allow_delete'  => true,
             'prototype'     => true,
             'by_reference'  => false,
-            'options'       => array(
-              'required'  => TRUE,
-              'attr'      => array(
-                'label'     => ' ',
-                'class' => 'participant-location',
-                'size' => 80
-              )
-            )
+            'label'         => ' ',
            )
         );
       }

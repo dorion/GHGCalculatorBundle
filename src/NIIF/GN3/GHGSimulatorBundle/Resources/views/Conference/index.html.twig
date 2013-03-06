@@ -21,17 +21,11 @@
     {{ form_row(form.confLocation) }}
     {{ form_row(form.confDuration) }}
 
-    <div id="pl-fields-list" data-prototype="{{ form_widget(form.participants.vars.prototype) | e }}">
-      {% for pl in form.participants %}
-        <div class="participant">
-          {{ form_row(pl) }}
-        </div>
-      {% endfor %}
-      </div>
-
+    <div id="pl-fields-list" data-prototype="{{ form_widget(form.participants.vars.prototype) | e }}"></div>
+   
     {{ form_rest(form) }}
 
-    <input type="submit" />
+    <input type="submit" class="button" />
   </form>
 {% endblock %}
 
@@ -46,7 +40,7 @@
     var collectionHolder = $('#pl-fields-list');
 
     // setup an "add a participant" link
-    var $addParticipantLink = $('<a href="#" class="add_participant_link">Add a participant</a>');
+    var $addParticipantLink = $('<a href="#" class="button">+</a>');
     var $newLinkDiv = $('<div></div>').append($addParticipantLink);
 
     jQuery(document).ready(function() {
@@ -71,6 +65,12 @@
         });
 
         $('#conference_confLocation').geocomplete();
+
+        createButtonFormA();
+
+        $this.tooltip({
+          track: true
+        });
     });
 
     function addParticipantForm(collectionHolder, $newLinkDiv) {
@@ -83,6 +83,7 @@
         // Replace '__name__' in the prototype's HTML to
         // instead be a number based on how many items we have
         var newForm = prototype.replace(/__name__/g, index);
+        newForm = newForm.replace(/div/g, 'span');
 
         // increase the index with one for the next item
         collectionHolder.data('index', index + 1);
@@ -97,10 +98,18 @@
         //binding geocoding function
         ('#conference_participants_' + index + '_participantLocation').geocomplete();
     }
+  
+    function createButtonFormA() {
+      $(".button").button().click(function( event ) {
+        event.preventDefault();
+      });
+    }
 
     function addParticipantFormDeleteLink($participantFormDiv) {
-        var $removeFormA = $('<a href="#">Delete this participant</a>');
+        var $removeFormA = $('<a href="#" class="button">-</a>');
         $participantFormDiv.append($removeFormA);
+
+        createButtonFormA();
 
         $removeFormA.on('click', function(e) {
             // prevent the link from creating a "#" on the URL
