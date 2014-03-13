@@ -1,4 +1,0 @@
-niifgn3_ghg_simulator:
-    resource: "@NIIFGN3GHGSimulatorBundle/Resources/config/routing.yml"
-    prefix:   /
-
